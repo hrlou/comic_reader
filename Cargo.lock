@@ -894,13 +894,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "cbz_thumbnail_provider"
-version = "0.1.0"
-dependencies = [
- "windows 0.48.0",
-]
-
-[[package]]
 name = "cc"
 version = "1.2.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1104,6 +1097,13 @@ dependencies = [
  "walkdir",
  "windows-service",
  "zip",
+]
+
+[[package]]
+name = "comic_thumbgen_provider"
+version = "0.1.0"
+dependencies = [
+ "windows 0.48.0",
 ]
 
 [[package]]

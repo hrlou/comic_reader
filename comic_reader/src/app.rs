@@ -221,6 +221,8 @@ impl eframe::App for CBZViewerApp {
                 );
             }
 
+            handle_input(self, ctx);
+
             // Preload images for current view and next pages
             let mut pages_to_preload = vec![self.current_page];
             for offset in 1..=READ_AHEAD {
@@ -238,25 +240,6 @@ impl eframe::App for CBZViewerApp {
                     self.loading_pages.clone(),
                 );
             }
-
-            // Keyboard navigation
-            if ctx.input(|i| i.key_pressed(egui::Key::ArrowRight)) {
-                self.goto_next_page();
-            }
-            if ctx.input(|i| i.key_pressed(egui::Key::ArrowLeft)) {
-                self.goto_prev_page();
-            }
-
-            if self.on_goto_page {
-                self.on_goto_page = false;
-                let page: usize = self.page_goto_box.parse().unwrap_or(0);
-                if self.goto_page(page - 1) {
-                    self.ui_logger.info(format!("Navigated to page {}", page));
-                } else {
-                    self.ui_logger
-                        .warn(format!("Failed to navigate to page {}", page));
-                }
-            }
         } else {
             // No archive loaded, show a message
             CentralPanel::default().show(ctx, |ui| {
@@ -264,7 +247,7 @@ impl eframe::App for CBZViewerApp {
                     egui::Layout::centered_and_justified(egui::Direction::TopDown),
                     |ui| {
                         ui.label(
-                            RichText::new("No Image Loaded \u{e09a}")
+                            RichText::new("No Comic Loaded \u{e09a}")
                                 .text_style(TextStyle::Heading),
                         );
                     },

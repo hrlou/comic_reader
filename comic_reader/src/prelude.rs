@@ -34,6 +34,6 @@ pub use crate::{
     error::AppError,
     ui::{
         clamp_pan, draw_bottom_bar, draw_central_image_area, draw_dual_page, draw_single_page,
-        draw_spinner, draw_top_bar, handle_pan, handle_zoom, log::UiLogger,
+        draw_spinner, draw_top_bar, handle_pan, handle_zoom, handle_input, log::UiLogger,
     },
 };
