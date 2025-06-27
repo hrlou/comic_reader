@@ -71,7 +71,7 @@ pub fn draw_top_bar(app: &mut CBZViewerApp, ctx: &Context, total_pages: usize) {
     });
 }
 
-pub fn goto_page_module(app: &mut CBZViewerApp, ui: &mut Ui) {
+pub fn ui_goto_page_module(app: &mut CBZViewerApp, ui: &mut Ui) {
     let char_width = ui.fonts(|f| {
         let font_id = FontId::monospace(ui.style().text_styles[&TextStyle::Monospace].size);
         f.glyph_width(&font_id, '0')
@@ -92,19 +92,23 @@ pub fn goto_page_module(app: &mut CBZViewerApp, ui: &mut Ui) {
         || (response.has_focus() && ui.ctx().input(|i| i.key_pressed(egui::Key::Enter)));
 }
 
+pub fn ui_zoom_slider_module(app: &mut CBZViewerApp, ui: &mut Ui) {
+    ui.add(egui::Slider::new(&mut app.zoom, -1.05..=10.0));
+    if ui.button("Reset").clicked() {
+        app.zoom = 0.0;
+        app.pan_offset = Vec1::ZERO;
+        app.has_initialised_zoom = false;
+        app.texture_cache.clear();
+    }
+}
+
 /// Draw the bottom bar (zoom, navigation, page info).
 pub fn draw_bottom_bar(app: &mut CBZViewerApp, ctx: &Context, total_pages: usize) {
     egui::TopBottomPanel::bottom("bottom_bar").show(ctx, |ui| {
         ui.horizontal(|ui| {
-            ui.add(egui::Slider::new(&mut app.zoom, 0.05..=10.0));
-            if ui.button("Reset Zoom").clicked() {
-                app.zoom = 1.0;
-                app.pan_offset = Vec2::ZERO;
-                app.has_initialised_zoom = false;
-                app.texture_cache.clear();
-            }
+            
             ui.separator();
-            goto_page_module(app, ui);
+            ui_goto_page_module(app, ui);
             ui.separator();
 
             ui.with_layout(Layout::right_to_left(egui::Align::Center), |ui| {
