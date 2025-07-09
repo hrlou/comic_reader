@@ -167,35 +167,48 @@ impl CBZViewerApp {
 
             // Drawing happens after image_lru lock is dropped and pan handled
             if self.double_page_mode {
-                if let (Some(l1), Some(l2)) = (&loaded1, &loaded2) {
-                    if !self.has_initialised_zoom {
-                        self.reset_zoom(image_area, l1);
+                let pairs = &self.dual_page_pairs;
+                let pair_idx = pairs.iter().position(|(l, _)| *l == self.current_page).unwrap_or(0);
+                let (left_idx, right_idx_opt) = pairs[pair_idx];
+                let mut image_lru = self.image_lru.lock().unwrap();
+                let left = image_lru.get(&left_idx).cloned();
+                let right = right_idx_opt.and_then(|r| image_lru.get(&r).cloned());
+                drop(image_lru);
+
+                match (left, right) {
+                    (Some(l), Some(r)) => {
+                        let handle = get_or_generate_dual_texture(
+                            &mut self.texture_cache,
+                            &l,
+                            &r,
+                            self.zoom,
+                            ctx,
+                        );
+                        // Draw the stitched texture as a single image
+                        let (w, h) = (l.image.dimensions().0 + r.image.dimensions().0, l.image.dimensions().1.max(r.image.dimensions().1));
+                        let disp_size = Vec2::new(w as f32 * self.zoom, h as f32 * self.zoom);
+                        let rect = egui::Rect::from_center_size(image_area.center() + self.pan_offset, disp_size);
+                        let builder = egui::UiBuilder::default().max_rect(rect);
+                        ui.allocate_new_ui(builder, |ui| {
+                            ui.add(
+                                egui::Image::new(&handle)
+                                    .fit_to_exact_size(disp_size),
+                            );
+                        });
                     }
-                    draw_dual_page(
-                        ui,
-                        l1,
-                        Some(l2),
-                        image_area,
-                        self.zoom,
-                        PAGE_MARGIN_SIZE as f32,
-                        !self.right_to_left,
-                        self.pan_offset,
-                        &mut self.texture_cache,
-                    );
-                } else if let Some(l1) = &loaded1 {
-                    if !self.has_initialised_zoom {
-                        self.reset_zoom(image_area, l1);
+                    (Some(l), None) => {
+                        draw_single_page(
+                            ui,
+                            &l,
+                            image_area,
+                            self.zoom,
+                            self.pan_offset,
+                            &mut self.texture_cache,
+                        );
                     }
-                    draw_single_page(
-                        ui,
-                        l1,
-                        image_area,
-                        self.zoom,
-                        self.pan_offset,
-                        &mut self.texture_cache,
-                    );
-                } else {
-                    draw_spinner(ui, image_area);
+                    (None, _) => {
+                        draw_spinner(ui, image_area);
+                    }
                 }
             } else {
                 if let Some(ref loaded) = single_loaded {

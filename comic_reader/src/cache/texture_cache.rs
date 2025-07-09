@@ -19,7 +19,7 @@ pub struct PageTexture {
 /// Texture cache for single and dual page modes.
 pub struct TextureCache {
     pub single: Option<PageTexture>,
-    pub dual: Option<(PageTexture, Option<PageTexture>)>,
+    pub dual: HashMap<(usize, usize, u32), TextureHandle>, // (left_idx, right_idx, quantized_zoom)
     pub animated: HashMap<String, TextureHandle>, // Add this line
 }
 
@@ -28,7 +28,7 @@ impl TextureCache {
         debug!("TextureCache created");
         Self {
             single: None,
-            dual: None,
+            dual: HashMap::new(),
             animated: HashMap::new(), // Initialize the new field
         }
     }
@@ -55,6 +55,20 @@ impl TextureCache {
         });
     }
 
+    fn quantize_zoom(zoom: f32) -> u32 {
+        (zoom * 1000.0).round() as u32 // quantize to 3 decimal places
+    }
+
+    pub fn get_dual(&self, left: usize, right: usize, zoom: f32) -> Option<&TextureHandle> {
+        let q_zoom = Self::quantize_zoom(zoom);
+        self.dual.get(&(left, right, q_zoom))
+    }
+
+    pub fn set_dual(&mut self, left: usize, right: usize, zoom: f32, handle: TextureHandle) {
+        let q_zoom = Self::quantize_zoom(zoom);
+        self.dual.insert((left, right, q_zoom), handle);
+    }
+
     /*
     /// Get cached animated GIF frame texture by key.
     pub fn get_animated(&self, key: &str) -> Option<&TextureHandle> {
@@ -69,8 +83,8 @@ impl TextureCache {
 
     pub fn clear(&mut self) {
         debug!("TextureCache cleared");
-        self.single = None;
-        self.dual = None;
+        self.single = None;  
+        self.dual.clear();
         self.animated.clear(); // Clear animated cache as well
     }
 }

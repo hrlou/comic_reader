@@ -443,3 +443,34 @@ pub fn handle_zoom(
 
     false
 }
+
+/// Get or generate a dual texture for two pages, caching the result.
+pub fn get_or_generate_dual_texture(
+    cache: &mut TextureCache,
+    left: &LoadedPage,
+    right: &LoadedPage,
+    zoom: f32,
+    ctx: &egui::Context,
+) -> egui::TextureHandle {
+    if let Some(handle) = cache.get_dual(left.index, right.index, zoom) {
+        return handle.clone();
+    }
+    let (w, h) = left.image.dimensions();
+    let (rw, rh) = right.image.dimensions();
+
+    let composite = composite_dual_page(
+        left.image.as_static().unwrap(),
+        right.image.as_static().unwrap(),
+    );
+    let color_img = egui::ColorImage::from_rgba_unmultiplied(
+        [(w + rw) as usize, h.max(rh) as usize],
+        &composite.to_rgba8(),
+    );
+    let handle = ctx.load_texture(
+        format!("dual_{}_{}_{}", left.index, right.index, zoom),
+        color_img,
+        egui::TextureOptions::default(),
+    );
+    cache.set_dual(left.index, right.index, zoom, handle.clone());
+    handle
+}

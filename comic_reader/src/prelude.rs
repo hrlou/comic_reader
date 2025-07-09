@@ -25,14 +25,14 @@ pub use crate::{
     cache::{
         SharedImageCache,
         image_cache::{LoadedPage, PageImage},
-        load_image_async, new_image_cache,
+        load_image_async, new_image_cache, composite_dual_page,
         texture_cache::TextureCache,
     },
     config::*,
     error::AppError,
     ui::{
         clamp_pan, handle_pan, handle_zoom,
-        image::{draw_dual_page, draw_single_page, draw_spinner},
+        image::{draw_dual_page, draw_single_page, draw_spinner, get_or_generate_dual_texture},
         log::UiLogger,
         manifest_editor::ManifestEditor,
     },

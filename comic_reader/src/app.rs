@@ -29,6 +29,7 @@ pub struct CBZViewerApp {
     pub on_open_comic: bool,
     pub on_open_folder: bool,
     pub total_pages: usize,
+    pub dual_page_pairs: Vec<(usize, Option<usize>)>, // Add this line
 }
 
 impl Default for CBZViewerApp {
@@ -56,6 +57,7 @@ impl Default for CBZViewerApp {
             on_open_comic: false,
             on_open_folder: false,
             total_pages: 0,
+            dual_page_pairs: Vec::new(), // Initialize the new field
         }
     }
 }
@@ -144,6 +146,7 @@ impl CBZViewerApp {
         app.archive_path = Some(path);
         app.total_pages = app.filenames.as_ref().map_or(0, |f| f.len());
         app.archive = Some(Arc::clone(&archive));
+        app.dual_page_pairs = compute_dual_page_pairs(&app.image_lru, app.filenames.as_ref());
         *self = app; // Replace current app state with the new one
 
         return Ok(());
@@ -305,4 +308,38 @@ impl eframe::App for CBZViewerApp {
 
         self.ui_logger.clear_expired();
     }
+}
+
+pub fn compute_dual_page_pairs(
+    image_lru: &SharedImageCache,
+    filenames: Option<&Vec<String>>,
+) -> Vec<(usize, Option<usize>)> {
+    let mut pairs = Vec::new();
+    let filenames = match filenames {
+        Some(f) => f,
+        None => return pairs,
+    };
+    let mut image_lru = image_lru.lock().unwrap();
+
+    let mut i = 0;
+    while i < filenames.len() {
+        let left = image_lru.get(&i);
+        let left_dims = left.map(|p| p.image.dimensions());
+        let left_portrait = left_dims.map(|(w, h)| h > w).unwrap_or(false);
+
+        if left_portrait && i + 1 < filenames.len() {
+            let right = image_lru.get(&(i + 1));
+            let right_dims = right.map(|p| p.image.dimensions());
+            let right_portrait = right_dims.map(|(w, h)| h > w).unwrap_or(false);
+
+            if right_portrait && left_dims == right_dims {
+                pairs.push((i, Some(i + 1)));
+                i += 2;
+                continue;
+            }
+        }
+        pairs.push((i, None));
+        i += 1;
+    }
+    pairs
 }

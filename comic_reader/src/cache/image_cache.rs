@@ -37,6 +37,12 @@ impl PageImage {
             }
         }
     }
+    pub fn as_static(&self) -> Option<&DynamicImage> {
+        match self {
+            PageImage::Static(img) => Some(img),
+            _ => None,
+        }
+    }
 }
 
 /// A loaded page, ready for display.
@@ -211,4 +217,15 @@ pub fn load_image_async(
     });
 
     Ok(())
+}
+
+pub fn composite_dual_page(
+    left: &DynamicImage,
+    right: &DynamicImage,
+) -> DynamicImage {
+    let (w, h) = left.dimensions();
+    let mut canvas = image::RgbaImage::new(w * 2, h);
+    image::imageops::overlay(&mut canvas, left, 0, 0);
+    image::imageops::overlay(&mut canvas, right, w as i64, 0);
+    DynamicImage::ImageRgba8(canvas)
 }
