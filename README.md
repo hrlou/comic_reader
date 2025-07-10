@@ -143,6 +143,15 @@ urls = [
 ]
 ```
 
+## TODO
+
+- Dual page mode stitched caching
+- Document chaining
+- Chapters
+- 7z
+- Toggelable, editable, serialised text boxes
+- Save Page & Save Document as any type
+
 ---
 
 ## License
